@@ -24,14 +24,11 @@ const connection = new Connection(process.env.RPC_ENDPOINT, {
   commitment: "finalized",
 });
 
-console.log(
-  connection.getRecentPerformanceSamples().then((data) => console.log(data))
-);
+// console.log(
+//   connection.getRecentPerformanceSamples().then((data) => console.log(data))
+// );
 
-const accountToCheck = new PublicKey(
-  "3m38Q4moooXLU5yb5MynZ9jS8iyV7YpEvp7McxiDt3GZ"
-);
-
+const accountToCheck = "3m38Q4moooXLU5yb5MynZ9jS8iyV7YpEvp7McxiDt3GZ";
 // Map to store txns that are fetched
 const fetchedTxns = new Map<string, boolean>();
 
@@ -59,21 +56,22 @@ enum TxnType {
     }[];
   } = {};
 
-  const data = await connection.getConfirmedSignaturesForAddress2(
+  console.log("fetching signatures");
+
+  const signatures = await fetchConfirmedSignaturesForAdd(
     accountToCheck,
-    {
-      limit: 1000,
-    },
-    "finalized"
+    undefined,
+    1 // This will fetch 2000 txns (failed + successful)
   );
 
-  const signaturesArr = data
-    .filter((ele) => !ele.err)
-    .map((ele) => ele.signature);
+  console.log(signatures.length, " number of signatures that are found");
 
-  // console.log(signaturesArr, signaturesArr.length);
+  if (signatures.length == 0) {
+    console.log("No signatures found, exiting");
+    process.exit(0);
+  }
 
-  const txnResults = await connection.getParsedTransactions(signaturesArr);
+  const txnResults = await connection.getParsedTransactions(signatures);
 
   // Construct query to write to hasura
   let queryParam = ``;
@@ -155,10 +153,10 @@ enum TxnType {
     //   );
 
     const postTokenBalancesOwner = postTokenBalances.filter(
-      (a) => a.owner === accountToCheck.toString()
+      (a) => a.owner === accountToCheck
     );
     const preTokenBalancesOwner = preTokenBalances.filter(
-      (a) => a.owner === accountToCheck.toString()
+      (a) => a.owner === accountToCheck
     );
 
     const indexesChecked: number[] = [];
@@ -360,10 +358,10 @@ enum TxnType {
     signatures.forEach((signature) => fetchedTxns.set(signature, true));
 
     const postTokenBalancesOwner = postTokenBalances.filter(
-      (a) => a.owner === accountToCheck.toString()
+      (a) => a.owner === accountToCheck
     );
     const preTokenBalancesOwner = preTokenBalances.filter(
-      (a) => a.owner === accountToCheck.toString()
+      (a) => a.owner === accountToCheck
     );
 
     const indexesChecked: number[] = [];
@@ -539,3 +537,64 @@ enum TxnType {
 
   const cachedValues = sortedTokenBalances;
 })();
+
+/** Signature that need to be fetched */
+const SIGNATURES: string[] = [];
+let lastFetchedSignature: string;
+
+/**
+ * This will return all successful signatures for a given adddress
+ * would even call itself to add all signatures that would be present
+ * @param address address to fetch signature for
+ * @param lastFetched fetches txns hash from here
+ * @param repeat number of times fns runs
+ */
+async function fetchConfirmedSignaturesForAdd(
+  address: string,
+  lastFetched: string | undefined,
+  repeat: number
+): Promise<string[]> {
+  // console.log(`Fetching from ${lastFetched ?? "starting"}`);
+
+  if (repeat == 0) {
+    // Done fething all signatures for this address
+    console.log(
+      "Done fetcheing all signature that are there for this ",
+      address
+    );
+    return SIGNATURES;
+  }
+
+  const data = await connection.getConfirmedSignaturesForAddress2(
+    new PublicKey(address),
+    {
+      limit: 1000,
+      before: lastFetched,
+    },
+    "finalized"
+  );
+
+  const signatures = data.filter((ele) => !ele.err).map((ele) => ele.signature);
+
+  // Add to global array of SIGNATURES
+  SIGNATURES.push(...signatures);
+
+  lastFetchedSignature = data[data.length - 1].signature;
+
+  if (data.length === 1000) {
+    // More signatures are present
+    console.log(
+      "More signatures are present, ",
+      lastFetchedSignature,
+      " is the last fetched signature"
+    );
+    await fetchConfirmedSignaturesForAdd(
+      address,
+      lastFetchedSignature,
+      repeat - 1
+    );
+  }
+
+  // console.log("Done fetcheing all signature that are there for this ", address);
+  return SIGNATURES;
+}

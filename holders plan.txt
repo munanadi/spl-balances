@@ -1,0 +1,57 @@
+1. What if there are more than 1000 txns for a given account
+ - Need to saave the last fethed txn hash and resume fetching from there, extract separate module and rerun this seperately [--DONE--]
+2. Setting a hard limit of fethcing only 1000txns for the ATA's of the mints that are in play
+ - IDK not decided on what to do for more than 1000 txns for mints
+ - Maybe extract this into a module too later? 
+ - Could follow the same thing as above
+ 
+
+# insert array of token data
+mutation inserTokensArr {
+  insert_tokens(objects: [{mint: "efasdf", amt: "12", blocktime: "213123", diff: "1", sol_change: "0.004", txn_hash: "sdfasdfsdafsdaf"}], on_conflict: {constraint: tokens_pkey}) {
+    affected_rows
+    returning {
+      txn_hash
+      mint
+    }
+  }
+}
+
+# fetch all distinct mints
+query fetchAllMints{
+  tokens(distinct_on:mint){
+    mint
+  }
+}
+
+# fetch data for a given mint
+query fetchAllForAMint{
+  tokens(where:{mint:{_eq:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}},order_by:{blocktime:asc}){
+    amt
+    diff
+    sol_change
+    blocktime
+    txn_hash
+  }
+}
+
+
+# past 24H data
+query fetchAll {
+  tokens(where: {mint: {_eq: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}, blocktime: {_gt: "", _lt: ""}}, order_by: {blocktime: asc}) {
+    amt
+    diff
+    mint
+    sol_change
+    blocktime
+    txn_hash
+  }
+}
+
+
+# get access to postgres running inside docker container
+- docker ps
+- docker exec -it <IMAGE_ID> bash
+- psql -U postgres
+- DONE
+
