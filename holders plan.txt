@@ -5,6 +5,19 @@
  - Maybe extract this into a module too later? 
  - Could follow the same thing as above
  
+Now I need to find ways to optimise for karma points? Great.
+- I can check for daily volume of tokens, more trading more karma points?
+- I can also start storing programID to check and see if they are using different programs around always
+- How frequently they are making transactions, order by blocktime and see what the differences are across two transactions
+  - how to check for two consequetive rows diffrences
+- Dumping tokens as soon as you receive them? 
+- The $ value of transactions that are going on.
+
+?? But all this will require a lot of storage and it doesn't make sense to store data for random wallets. They could instead provide this karma
+ thing like a credit checking service? - Need more thought to formulate this opinion.
+ -- How about checking only 1000 txns for random wallets and storing thatt data.
+?? 
+
 
 # insert array of token data
 mutation inserTokensArr {

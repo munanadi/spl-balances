@@ -108,16 +108,6 @@ enum TxnType {
     } = meta;
     const { message, signatures } = transaction;
 
-    // const accountInfos = message.accountKeys.map((a) => a.pubkey.toString());
-    // const signerAccounts = message.accountKeys
-    //   .filter((a) => a.signer)
-    //   .map((a) => a.pubkey.toString());
-    // const writerAccounts = message.accountKeys
-    //   .filter((a) => a.writable)
-    //   .map((a) => a.pubkey.toString());
-    // // console.log(accountInfos, signerAccounts, writerAccounts);
-    // const programIds = message.instructions.map((i) => i.programId.toString());
-
     if (!preTokenBalances || !postTokenBalances) {
       console.log("------------ Failed to fetch pre post token balances");
       // Need to refetch this too
@@ -126,31 +116,6 @@ enum TxnType {
 
     // If here then the txn was fetched properly
     signatures.forEach((signature) => fetchedTxns.set(signature, true));
-
-    // const preTokenBalancesMap = preTokenBalances
-    //   .map((p) => ({
-    //     accIndex: p.accountIndex,
-    //     mint: p.mint,
-    //     uiAmount: p.uiTokenAmount.uiAmount ?? 0,
-    //     owner: p.owner ?? "",
-    //   }))
-    //   .filter(
-    //     (a) =>
-    //       a.owner === accountToCheck.toString() &&
-    //       a.mint == "BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg"
-    //   );
-    // const postTokenBalancesMap = postTokenBalances
-    //   .map((p) => ({
-    //     accIndex: p.accountIndex,
-    //     mint: p.mint,
-    //     uiAmount: p.uiTokenAmount.uiAmount ?? 0,
-    //     owner: p.owner ?? "",
-    //   }))
-    //   .filter(
-    //     (a) =>
-    //       a.owner === accountToCheck.toString() &&
-    //       a.mint == "BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg"
-    //   );
 
     const postTokenBalancesOwner = postTokenBalances.filter(
       (a) => a.owner === accountToCheck
